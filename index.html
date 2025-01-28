@@ -18,19 +18,20 @@
             padding: 20px;
             max-width: 600px;
             margin: 0 auto;
-            background-color: #f5f5f5;
+            background-color: #111;
+            color: #fff;
         }
         .card {
-            background: white;
+            background: #222;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             margin-top: 20px;
         }
         .title {
             font-size: 1.5rem;
             font-weight: bold;
-            color: #333;
+            color: #fff;
             margin-bottom: 20px;
             text-align: center;
         }
@@ -41,15 +42,21 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            color: #444;
+            color: #fff;
         }
         select, input {
             width: 100%;
             padding: 12px;
-            border: 1px solid #ddd;
+            border: 1px solid #444;
             border-radius: 6px;
             font-size: 16px;
             margin-bottom: 10px;
+            background: #333;
+            color: #fff;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #666;
         }
         .button-group {
             display: flex;
@@ -80,22 +87,22 @@
             background: #b91c1c;
         }
         .error {
-            background: #fee2e2;
-            color: #991b1b;
+            background: #7f1d1d;
+            color: #fee2e2;
             padding: 12px;
             border-radius: 6px;
             margin-bottom: 20px;
         }
         .success {
-            background: #dcfce7;
-            color: #166534;
+            background: #064e3b;
+            color: #dcfce7;
             padding: 12px;
             border-radius: 6px;
             margin-bottom: 20px;
         }
         .pen-info {
             font-size: 0.9rem;
-            color: #666;
+            color: #ccc;
             margin-top: 20px;
         }
         .pen-info ul {
@@ -106,7 +113,7 @@
             margin-bottom: 4px;
         }
         .disabled {
-            background-color: #f3f4f6;
+            background-color: #222;
             cursor: not-allowed;
         }
         @media (max-width: 480px) {
@@ -128,13 +135,19 @@
             const [clicks, setClicks] = React.useState('');
             const [result, setResult] = React.useState(null);
             const [error, setError] = React.useState('');
-            const [lastUpdated, setLastUpdated] = React.useState(null); // 'dose' or 'clicks'
+            const [lastUpdated, setLastUpdated] = React.useState(null);
 
+            // Pen configuration with just max dose and max clicks
             const penData = {
-                '2.4': { maxDose: 2.4, dosePerClick: 0.032, maxClicks: 74 },
-                '1.7': { maxDose: 1.7, dosePerClick: 0.023, maxClicks: 74 },
-                '1.0': { maxDose: 1.0, dosePerClick: 0.014, maxClicks: 74 },
-                '0.5': { maxDose: 0.5, dosePerClick: 0.014, maxClicks: 37 }
+                '2.4': { maxDose: 2.4, maxClicks: 74 },
+                '1.7': { maxDose: 1.7, maxClicks: 74 },
+                '1.0': { maxDose: 1.0, maxClicks: 74 },
+                '0.5': { maxDose: 0.5, maxClicks: 37 }
+            };
+
+            // Calculate dose per click based on max dose and max clicks
+            const getDosePerClick = (pen) => {
+                return pen.maxDose / pen.maxClicks;
             };
 
             const calculate = () => {
@@ -147,6 +160,7 @@
                 }
 
                 const pen = penData[penType];
+                const dosePerClick = getDosePerClick(pen);
 
                 if (lastUpdated === 'dose') {
                     const dose = parseFloat(desiredDose);
@@ -158,8 +172,10 @@
                         setError(`The maximum dose for ${penType}mg pen is ${pen.maxDose}mg`);
                         return;
                     }
-                    const calculatedClicks = Math.round(dose / pen.dosePerClick);
-                    const actualDose = (calculatedClicks * pen.dosePerClick).toFixed(3);
+                    
+                    // Calculate clicks needed for desired dose
+                    const calculatedClicks = Math.round(dose / dosePerClick);
+                    const actualDose = (calculatedClicks * dosePerClick).toFixed(3);
                     setClicks(calculatedClicks);
                     setResult({
                         message: `${calculatedClicks} clicks will deliver approximately ${actualDose}mg`
@@ -174,7 +190,9 @@
                         setError(`The maximum clicks for ${penType}mg pen is ${pen.maxClicks}`);
                         return;
                     }
-                    const calculatedDose = (clickCount * pen.dosePerClick).toFixed(3);
+                    
+                    // Calculate dose from clicks
+                    const calculatedDose = (clickCount * dosePerClick).toFixed(3);
                     setDesiredDose(calculatedDose);
                     setResult({
                         message: `${clickCount} clicks will deliver approximately ${calculatedDose}mg`
@@ -196,8 +214,8 @@
                 setDesiredDose('');
             };
 
-            const resetCalculator = () => {
-                setPenType('');
+            const handlePenChange = (e) => {
+                setPenType(e.target.value);
                 setDesiredDose('');
                 setClicks('');
                 setResult(null);
@@ -205,8 +223,8 @@
                 setLastUpdated(null);
             };
 
-            const handlePenChange = (e) => {
-                setPenType(e.target.value);
+            const resetCalculator = () => {
+                setPenType('');
                 setDesiredDose('');
                 setClicks('');
                 setResult(null);
@@ -240,6 +258,7 @@
                             onChange={handleDoseChange}
                             placeholder="Enter dose in mg"
                             className={lastUpdated === 'clicks' ? 'disabled' : ''}
+                            readOnly={lastUpdated === 'clicks'}
                         />
                     </div>
 
@@ -251,6 +270,7 @@
                             onChange={handleClicksChange}
                             placeholder="Enter number of clicks"
                             className={lastUpdated === 'dose' ? 'disabled' : ''}
+                            readOnly={lastUpdated === 'dose'}
                         />
                     </div>
 
@@ -280,7 +300,7 @@
                             <p>Pen Info:</p>
                             <ul>
                                 <li>Maximum dose: {penData[penType].maxDose}mg</li>
-                                <li>Dose per click: {penData[penType].dosePerClick}mg</li>
+                                <li>Dose per click: {getDosePerClick(penData[penType]).toFixed(3)}mg</li>
                                 <li>Maximum clicks: {penData[penType].maxClicks}</li>
                             </ul>
                         </div>
